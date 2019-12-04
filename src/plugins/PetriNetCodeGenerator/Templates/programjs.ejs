@@ -1,0 +1,105 @@
+<%
+var i, j,
+        outerIf = '        if',
+        innerIf = '            if',
+        initialPlaceName;
+
+for (i = 0; i < petriNet.places.length; i += 1) {
+    if (petriNet.places[i].id === petriNet.places[0].id) {
+        initialPlaceName = petriNet.places[i].name;
+        break;
+    }
+}
+
+%>
+var PetriNet = {};
+
+/**
+ * @param {function(string)} log - Out put goes here, e.g. console.log.
+ */
+PetriNet.Simulator = function (log) {
+    'use strict';
+    var places = [],
+        self = this;
+
+    this.currentPlace = '<%=initialPlaceName%>';
+    this.currentPlaceId = '<%=petriNet.initialPlace.id%>';
+    this.currentMultiplicity = [];
+    this.currentMarking =<%=petriNet.initialPlace.marking%>;
+    this.atEnd = false;
+
+<%for (i = 0; i < petriNet.places.length; i += 1) {%>    places.push('<%=petriNet.places[i]%>');
+<%}%>
+    this.initialize = function () {
+        self.currentPlace = '<%=initialPlaceName%>';
+        self.currentPlaceId = '<%=petriNet.initialPlace.id%>';
+        self.currentMultiplicity = [];
+        self.currentMarking = <%=petriNet.initialPlace.marking%>;
+        self.atEnd = false;
+        self.enterEvent();
+    };
+
+    this.enterEvent = function (currentInput) {
+<%for (i = 0; i < petriNet.places.length; i += 1) {
+    var multiplicity = [];
+    if (petriNet.places[i].arcs.length === 0) {
+        continue;
+    }
+    innerIf = '            if';%><%=outerIf%> (self.currentPlaceId === "<%=petriNet.places[i].id%>") {
+<%for (j = 0; j < petriNet.places[i].arcs.length; j += 1) {
+    var arc = petriNet.places[i].arcs[j];
+    multiplicity.push(arc.multiplicity);
+%><%=innerIf%> (currentInput === '<%=arc.multiplicity%>') {
+                log('Switching state to <%=arc.targetName%> (<%=arc.targetId%>)');
+                self.currentPlaceId = '<%=arc.targetId%>';
+                self.currentPlace = '<%=arc.targetName%>';
+                self.enterEvent();
+            }<%if (j === petriNet.places[i].arcs.length - 1) {%> else {
+                self.currentMultiplicity = [<%=multiplicity%>];
+                log('Possible multiplicity for arc(s): <%=multiplicity%>');
+            }<%}innerIf = ' else if';}%>
+        }<%outerIf = ' else if';}%>
+    
+       
+<%for (i = 0; i < petriNet.transitions.length; i += 1) {
+    var multiplicity = [];
+    if (petriNet.transitions[i].arcs.length === 0) {
+        continue;
+    }
+    innerIf = '            if';%><%=outerIf%> (self.currentPlaceId === "<%=petriNet.transitions[i].id%>") {
+<%for (j = 0; j < petriNet.transitions[i].arcs.length; j += 1) {
+    var arc = petriNet.transitions[i].arcs[j];
+    multiplicity.push(arc.multiplicity);
+%><%=innerIf%> (currentInput === '<%=arc.multiplicity%>') {
+                log('Switching state to <%=arc.targetName%> (<%=arc.targetId%>)');
+                self.currentPlaceId = '<%=arc.targetId%>';
+                self.currentPlace = '<%=arc.targetName%>';
+                self.enterEvent();
+            }<%if (j === petriNet.transitions[i].arcs.length - 1) {%> else {
+                self.currentMultiplicity = [<%=multiplicity%>];
+                log('Possible multiplicity for arc(s): <%=multiplicity%>');
+            }<%}innerIf = ' else if';}%>
+        }<%outerIf = ' else if';}%>
+
+        if (currentInput === 'exit') {
+            self.atEnd = true;
+        } else if (places.indexOf(self.currentPlaceId) !== -1) {
+            log('At a final state ' + self.currentPlace + '(' + self.currentPlaceId + ')');
+            self.atEnd = true;
+        }
+    };
+
+    this.getCurrentMarking = function(){
+        return self.currentMarking;
+    };
+    this.getCurrentMultiplicity = function () {
+        return self.currentMultiplicity;
+    };
+
+    this.getCurrentPlace = function () {
+        return {
+            id: self.currentPlaceId,
+            name: self.currentPlace
+        };
+    };
+};

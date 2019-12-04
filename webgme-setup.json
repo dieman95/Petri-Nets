@@ -1,0 +1,29 @@
+{
+  "components": {
+    "plugins": {
+      "PetriNetCodeGenerator": {
+        "src": "src/plugins/PetriNetCodeGenerator",
+        "test": "test/plugins/PetriNetCodeGenerator"
+      }
+    },
+    "decorators": {
+      "PetriNetDecorator": {
+        "src": "src/decorators/PetriNetDecorator"
+      }
+    },
+    "visualizers": {
+      "PetriNetSim": {
+        "src": "panels/PetriNetSim/PetriNetSimPanel",
+        "title": "PetriNetSim",
+        "panel": "src/visualizers/panels/PetriNetSim",
+        "secondary": false,
+        "widget": "src/visualizers/widgets/PetriNetSim"
+      }
+    }
+  },
+  "dependencies": {
+    "plugins": {},
+    "decorators": {},
+    "visualizers": {}
+  }
+}
