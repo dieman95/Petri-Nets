@@ -217,12 +217,14 @@ define(['jquery','d3','css!./styles/PetriNetSimWidget.css'], function () {
                     //.attr('textContent',stateData.marking);
                 stateData.defaultColor = 'orange';
                 stateData.inCircle = this._svgD3.append('text')
+                    .attr('id','markingInCircle')
                     .attr('x', stateData.desc.position.x-5)
                     .attr('y', stateData.desc.position.y+5)
                     .text(function(){
                         return stateData.desc.marking;
                     })
-                    .attr('fill','black');
+                    .attr('fill','black')
+                    .attr('font-size',14);
                     
             } else if(stateData.desc.metaType ===PLACE_TYPES.Transition){
                 stateData.d3Item = this._svgD3.append('rect')
@@ -239,26 +241,48 @@ define(['jquery','d3','css!./styles/PetriNetSimWidget.css'], function () {
                 .text(function(){
                     return stateData.desc.name;
                 })
-                .attr('fill','black');
+                .attr('fill','black')
+                .attr('font-size', 14);
          }
     };
 
     PetriNetSimWidget.prototype._addTransitionsToGraph = function(){
-        var key, arcData, srcDesc, dstDesc;
+        var key, arcData, srcDesc, dstDesc, randColor;
 
         for(key in this._idToTransition){
             arcData = this._idToTransition[key];
 
             srcDesc = this._idToState[arcData.desc.connects.srcId].desc;
             dstDesc = this._idToState[arcData.desc.connects.dstId].desc;
-
+            randColor = '#' + ("000000" + Math.random().toString(16).slice(2,8)).slice(-6);
             arcData.d3Item = this._svgD3.append('line')
                 .attr('x1',srcDesc.position.x)
                 .attr('y1',srcDesc.position.y)
                 .attr('x2',dstDesc.position.x)
                 .attr('y2',dstDesc.position.y)
                 .attr('stroke-width',1)
-                .attr('stroke', 'black');
+                .attr('stroke', 'black')
+                .attr('marker-end',"url(#arrow)");
+            arcData.title = this._svgD3.append('text')
+                .attr('x',(Math.abs(dstDesc.position.x + srcDesc.position.x)/2)+10)
+                .attr('y',(Math.abs(dstDesc.position.y + srcDesc.position.y)/2)-7)
+                .text(function(){
+                    return arcData.desc.multiplicity;
+                })
+                .attr('font-size',12)
+                .attr('fill','black');
+            arcData.ending = this._svgD3.append('marker')
+                .attr('id','arrow')
+                .attr('markerWidth',"10")
+                .attr('markerHeight',"10")
+                .attr('refX',"27.5")
+                .attr('refY',"3")
+                .attr('orient',"auto")
+                .attr('markerUnits',"stroke-width")
+                .attr('fill','black');
+            arcData.ending.append('path')
+                .attr('d',"M0,0 L0,6 L9,3 z")
+                .attr('fill','black');
         }
     };
 
@@ -298,18 +322,18 @@ define(['jquery','d3','css!./styles/PetriNetSimWidget.css'], function () {
 
     PetriNetSimWidget.prototype._setState = function(stateId, prevStateId){
         var newStateData = this._idToState[stateId],
-            arcData,prevStateData, delay = 0, key;
+            arcData,prevStateData, delay = 0, key, possStates = [];
 
         //event = self._inputField.val();  
-
+        // if(newStateData.desc.isEnd === )
         if(prevStateId && prevStateId !==stateId){
             prevStateData =this._idToState[prevStateId];
             prevStateData.d3Item.transition()
-                .duration(300)
+                .duration(500)
                 .attr('r',10)
                 .delay(400)
                 .transition()
-                .duration(300)
+                .duration(500)
                 .attr('r',20)
                 .attr('fill',prevStateData.defaultColor);
             delay = 400;
@@ -320,12 +344,12 @@ define(['jquery','d3','css!./styles/PetriNetSimWidget.css'], function () {
             }
             arcData.d3Item.transition()
             .delay(200)
-            .duration(200)
+            .duration(500)
             .attr('stroke','red')
             .attr('stroke-width',2)
             .delay(200)
             .transition()
-            .duration(200)
+            .duration(500)
             .attr('stroke','black')
             .attr('stroke-width',1);
         }
@@ -334,7 +358,28 @@ define(['jquery','d3','css!./styles/PetriNetSimWidget.css'], function () {
         if(prevStateId !== undefined){
             //if (prevStateData.desc.marking > 0 && prevStateData.desc.metaType === 'BasePlace'){
             try{
-                prevStateData.marking = 0;
+                if(prevStateData.desc.isInitial===true){
+                    possStates.push(d3.selectAll("#markingInCircle"));
+                    for(key =0; key<possStates[0][0].length;key+=1){
+                        if(possStates[0][0][key].textContent === "1"){
+                            possStates[0][0][key].remove();
+                        }
+                    }
+                    // prevStateData.inCircle.text.innerHTML(" ");
+                    prevStateData.marking = 0;
+                    prevStateData.desc.marking = 0;
+                    prevStateData.inCircle.append('text')
+                        .attr('x',prevStateData.desc.position.x-5)
+                        .attr('y',prevStateData.desc.position.y+5)
+                        .text(function(){
+                            return prevStateData.marking;
+                        })
+                        .attr('fill','black');
+                } else{
+                    prevStateData.marking = 0;
+                }
+
+                
             }
             catch(err){
                 throw 'Wrong input event. Please restart model and follow instructions on top for the possible input events'

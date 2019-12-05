@@ -19,11 +19,17 @@
         "secondary": false,
         "widget": "src/visualizers/widgets/PetriNetSim"
       }
+    },
+    "seeds": {
+      "PetriNet": {
+        "src": "src/seeds/PetriNet"
+      }
     }
   },
   "dependencies": {
     "plugins": {},
     "decorators": {},
-    "visualizers": {}
+    "visualizers": {},
+    "seeds": {}
   }
 }
