@@ -1,0 +1,86 @@
+
+
+domain PetriNet{
+  Place ::= new (id: Integer, tokens : Integer).
+  Transition ::= new(id: Integer).
+  PtT ::= new(src: Place, dst: Transition).
+  TtP ::= new (src: Transition, dst : Place).
+
+  Ready ::= new (t: Transition).
+  Enabled ::= new (t: Transition).
+}
+
+model testNet of PetriNet{
+  p1 is Place(1,1).
+  t1 is Transition(1).
+  p2 is Place(2,0).
+  p3 is Place(3,1).
+  t2 is Transition(2).
+  PtT(p3,t2).
+  TtP(t2,p3).
+  PtT(p1, t1).
+  TtP(t1, p2).
+}
+
+transform fireAll(in :: PetriNet) returns(out:: PetriNet){
+  in.Ready(t) :- t is in.Transition(x), 
+             a1 is in.PtT(_, t),
+             p = a1.src,
+             p.tokens >= 1.
+
+  in.Enabled(t) :- t is in.Transition(_),
+                v1 = count({x| x is in.PtT(_,t)}),
+                v2 = count({y| y is in.Ready(t)}),
+                v1 = v2.             
+
+
+  out.Place(x,z) :- p is in.Place(x,y),
+                    t is in.Transition(_),
+                    in.Enabled(t),
+                    in.PtT(p, t),
+                    no in.TtP(t, p),
+                    j = 1,
+                    z = y - j.
+  out.Place(x,z) :- p is in.Place(x,y),
+                    t is in.Transition(_),
+                    in.Enabled(t),
+                    no in.PtT(p, t),
+                    in.TtP(t, p),
+                    j = 1,
+                    z = y + j.
+
+  out.Place(x,y) :- p is in.Place(x,y),
+                    t is in.Transition(_),
+                    in.Enabled(t),
+                    in.PtT(p, t),
+                    in.TtP(t, p).
+
+  out.Transition(x) :- in.Transition(x).
+
+  out.PtT(p2,t) :- in.PtT(p1,t),
+                   j = 1,
+                   k = p1.tokens - j,
+                   no in.TtP(t,p1),
+                   p2 = out.Place(p1.id,k).
+  out.TtP(t,p2) :- in.TtP(t,p1),
+                  j = 1,
+                  k = p1.tokens + j,
+                  no in.PtT(p1,t),
+                  p2 = out.Place(p1.id,k).
+
+  out.TtP(t,p2) :- in.TtP(t,p1),
+                  j = 1,
+                  k = p1.tokens + j,
+                  in.PtT(p1,t),
+                  in.TtP(t,p1),
+                  p2 = out.Place(p1.id,p1.tokens).
+
+  out.PtT(p2,t) :- in.PtT(p1,t),
+                  j = 1,
+                  k = p1.tokens + j,
+                  in.PtT(p1,t),
+                  in.TtP(t,p1),
+                  p2 = out.Place(p1.id,p1.tokens).
+
+
+}
